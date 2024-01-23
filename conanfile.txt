@@ -1,0 +1,4 @@
+[requires]
+abseil/20230802.1
+[generators]
+cmake_find_package
