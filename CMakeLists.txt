@@ -9,3 +9,4 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 find_package(absl REQUIRED)
 
 add_subdirectory(src)
+add_subdirectory(example)
