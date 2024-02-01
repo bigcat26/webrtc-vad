@@ -1,4 +1,5 @@
 [requires]
 abseil/20230802.1
+minimp3/cci.20211201
 [generators]
 cmake_find_package

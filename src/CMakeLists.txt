@@ -8,6 +8,8 @@ file(GLOB_RECURSE unittest_srcs **/*_unittest.cc)
 # exclude unittests from srcs
 list(REMOVE_ITEM srcs ${unittest_srcs})
 
+find_package(absl REQUIRED)
+
 add_library(vad ${srcs})
 target_include_directories(vad PUBLIC .)
 target_link_libraries(vad PUBLIC absl::absl)
