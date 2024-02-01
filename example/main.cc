@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "common_audio/vad/include/vad.h"
+#include "modules/audio_processing/vad/voice_activity_detector.h"
+
 #define MINIMP3_IMPLEMENTATION
 #include "minimp3.h"
 #include "minimp3_ex.h"
@@ -107,9 +109,17 @@ void checkVoiceActivity(const std::vector<mp3d_sample_t> &pcm) {
   std::cout << "Done" << std::endl;
 }
 
-int main() {
+void testCommonAudioVad() {
   auto pcm = loadMp3(PROJECT_ROOT "/samples/airport-broadcast-2.mp3");
-  // auto vad = webrtc::CreateVad(webrtc::Vad::kVadNormal);
   checkVoiceActivity(pcm);
+}
+
+void testAudioProcessingVad() {
+    webrtc::VoiceActivityDetector vad;
+
+}
+
+int main() {
+  testAudioProcessingVad();
   return 0;
 }
