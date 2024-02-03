@@ -84,15 +84,15 @@ std::vector<mp3d_sample_t> loadMp3(const std::string &path) {
   return pcm;
 }
 
-void checkVoiceActivity(const std::vector<mp3d_sample_t> &pcm) {
+void testCommonAudioVad(const std::vector<mp3d_sample_t> &pcm, int sampleRate) {
   auto vad = webrtc::CreateVad(webrtc::Vad::kVadVeryAggressive);
-  int sampleRate = 16000;
   int frameLength = 160;
   int numFrames = pcm.size() / frameLength;
   int lastActivity = 0;
   webrtc::Vad::Activity last = webrtc::Vad::kError;
   for (int i = 0; i < numFrames; i++) {
-    auto activity = vad->VoiceActivity(&pcm[i * frameLength], frameLength, sampleRate);
+    auto activity =
+        vad->VoiceActivity(&pcm[i * frameLength], frameLength, sampleRate);
     if (activity != last) {
       // convert frame index to seconds
       auto ms = i * frameLength * 1000 / sampleRate;
@@ -100,8 +100,9 @@ void checkVoiceActivity(const std::vector<mp3d_sample_t> &pcm) {
       auto millis = ms % 1000;
       auto seconds = (ms / 1000) % 60;
       auto minutes = ms / 60000;
-      std::cout << minutes << ":" << seconds << "." << millis << " activity=" << activity
-                << " duration=" << ms - lastActivity << "ms" << std::endl;
+      std::cout << minutes << ":" << seconds << "." << millis
+                << " activity=" << activity << " duration=" << ms - lastActivity
+                << "ms" << std::endl;
       last = activity;
       lastActivity = ms;
     }
@@ -109,17 +110,56 @@ void checkVoiceActivity(const std::vector<mp3d_sample_t> &pcm) {
   std::cout << "Done" << std::endl;
 }
 
-void testCommonAudioVad() {
-  auto pcm = loadMp3(PROJECT_ROOT "/samples/airport-broadcast-2.mp3");
-  checkVoiceActivity(pcm);
-}
+void testAudioProcessingVad(const std::vector<mp3d_sample_t> &pcm,
+                            int sampleRate) {
+  std::ofstream ofs("processed.pcm");
+  std::vector<mp3d_sample_t> blankFrame(160, 0);
+  webrtc::VoiceActivityDetector vad;
+  int frameLength = 160;
+  int numFrames = pcm.size() / frameLength;
+  const float activityThreshold = 0.4f;
+  int state = 0;
+  int lastState = 0;
+  int lastTimestamp = 0;
+  for (int i = 0; i < numFrames; i++) {
+    vad.ProcessChunk(&pcm[i * frameLength], frameLength, sampleRate);
+    state = vad.last_voice_probability() > activityThreshold ? 1 : 0;
+    if (state != lastState) {
+      // convert frame index to seconds
+      auto ms = i * frameLength * 1000 / sampleRate;
+      // print activity with timestamp in MM:SS.sss format with activity
+      auto millis = ms % 1000;
+      auto seconds = (ms / 1000) % 60;
+      auto minutes = ms / 60000;
+      std::cout << minutes << ":" << seconds << "." << millis
+                << " activity=" << state
+                << " probability=" << int(vad.last_voice_probability() * 100)
+                << " duration=" << ms - lastTimestamp << "ms" << std::endl;
+      lastTimestamp = ms;
+      lastState = state;
+    }
 
-void testAudioProcessingVad() {
-    webrtc::VoiceActivityDetector vad;
+    if (state) {
+      ofs.write(reinterpret_cast<const char *>(&pcm[i * frameLength]),
+                frameLength * sizeof(mp3d_sample_t));
+    } else {
+      ofs.write(reinterpret_cast<const char *>(blankFrame.data()),
+                frameLength * sizeof(mp3d_sample_t));
+    }
 
+    // printf("chunk[%d] rmsSize=%ld voiceProbSize=%ld voiceProb=%f\n", i,
+    //        vad.chunkwise_rms().size(),
+    //        vad.chunkwise_voice_probabilities().size(),
+    //        vad.last_voice_probability());
+    // vad.chunkwise_rms();
+    // vad.chunkwise_voice_probabilities();
+  }
+  ofs.close();
 }
 
 int main() {
-  testAudioProcessingVad();
+  auto pcm = loadMp3(PROJECT_ROOT "/samples/airport-broadcast-2.mp3");
+  // testCommonAudioVad(pcm, 16000);
+  testAudioProcessingVad(pcm, 16000);
   return 0;
 }

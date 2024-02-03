@@ -1,0 +1,22 @@
+{
+    "[cpp]": {
+        "editor.formatOnSave": true,
+    },
+    "cmake.generator": "Ninja",
+    "cmake.buildDirectory": "${workspaceFolder}/.build",
+    "cmake.configureArgs": [
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DCONFIG_BUILD_CLI=OFF"
+    ],
+    "cmake.buildArgs": [
+        "-v",
+        "-j4"
+    ],
+    "cmake.copyCompileCommands": "${workspaceFolder}/.build/compile_commands.json",
+    "cmake.clearOutputBeforeBuild": false,
+    "gtest-adapter.debugConfig": "C/C++: Unit Test",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/.build"
+    ]
+}
